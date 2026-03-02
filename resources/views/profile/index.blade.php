@@ -231,12 +231,11 @@
                                         
                                         <div class="flex gap-3 w-full justify-end">
     
-                                        <form action="{{ route('order.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?\n\nSemua produk akan dikembalikan ke Keranjang Belanja Anda.');">
-                                            @csrf
-                                            <button type="submit" class="bg-white border border-red-200 text-red-500 text-xs font-bold px-5 py-2.5 rounded-lg hover:bg-red-50 transition">
-                                                Batalkan
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                @click="$dispatch('trigger-cancel', { url: '{{ route('order.cancel', $order->id) }}' })" 
+                                                class="bg-white border border-red-200 text-red-500 text-xs font-bold px-5 py-2.5 rounded-lg hover:bg-red-50 transition">
+                                            Batalkan
+                                        </button>
 
                                         <a href="#" class="bg-blue-500 text-white text-xs font-bold px-6 py-2.5 rounded-lg hover:bg-blue-600 transition shadow-md shadow-blue-500/20 text-center flex items-center">
                                             Bayar Sekarang
