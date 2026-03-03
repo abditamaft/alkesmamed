@@ -10,9 +10,11 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 
 // ==========================================================
-// 1. RUTE PUBLIK (Bisa diakses siapa saja tanpa login)
+// 1. RUTE PUBLIK (Bebas akses)
 // ==========================================================
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/produk', [ProductController::class, 'index'])->name('produk.index');
@@ -22,35 +24,57 @@ Route::get('/blog/{id}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/kontak', [ContactController::class, 'index'])->name('kontak.index');
 Route::get('/api/search-products', [ProductController::class, 'searchApi'])->name('api.search');
 
-
 // ==========================================================
-// 2. RUTE GUEST (Hanya bisa diakses jika BELUM login)
+// 2. RUTE GUEST (Hanya sebelum login)
 // ==========================================================
 Route::middleware('guest')->group(function () {
-    // Halaman Login & Register
     Route::get('/login-register', [AuthController::class, 'index'])->name('login');
-    
-    // Proses Form
     Route::post('/login', [AuthController::class, 'login'])->name('login.perform');
     Route::post('/register', [AuthController::class, 'register'])->name('register.perform');
-
-    // Rute Google SSO
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('google.login');
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 });
 
-
 // ==========================================================
-// 3. RUTE AUTH (HANYA BISA DIAKSES JIKA SUDAH LOGIN)
+// 3. RUTE AUTH (Wajib Login, tapi belum tentu verified)
 // ==========================================================
 Route::middleware(['auth'])->group(function () {
-    // Proses Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Profil & Area Member
-    Route::get('/profil', [ProfileController::class, 'index'])->name('profile.index');
-    Route::post('/profil/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/email/verify', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        // Ambil waktu dari Cache. Jika tidak ada, hitung 60 menit dari waktu dia daftar
+        $expiresAt = \Illuminate\Support\Facades\Cache::get('verify_timer_' . $user->id, $user->created_at->addMinutes(60));
+        
+        return view('auth.verify-email', compact('expiresAt'));
+    })->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect('/profil')->with('success', 'Email berhasil diverifikasi!');
+    })->middleware(['signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        
+        // Reset waktu kedaluwarsa jadi 60 menit dari sekarang
+        \Illuminate\Support\Facades\Cache::put('verify_timer_' . $request->user()->id, now()->addMinutes(60), now()->addMinutes(60));
+        
+        return back()->with('message', 'Link verifikasi baru telah dikirim! Waktu direset.');
+    })->middleware(['throttle:6,1'])->name('verification.send');
+
+    // API Kota (dibutuhkan di halaman profil untuk melengkapi data sebelum belanja)
     Route::get('/api/cities/{province_id}', [ProfileController::class, 'getCities']);
+    Route::post('/profil/update', [ProfileController::class, 'update'])->name('profile.update');
+});
+
+// ==========================================================
+// 4. RUTE VERIFIED (Wajib Login & Wajib Klik Link di Email)
+// ==========================================================
+Route::middleware(['auth', 'verified'])->group(function () {
+    
+    // Halaman Profil (Utama)
+    Route::get('/profil', [ProfileController::class, 'index'])->name('profile.index');
     
     // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -65,9 +89,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/keranjang/hapus/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
     Route::post('/keranjang/hapus-massal', [CartController::class, 'destroyBulk'])->name('cart.destroyBulk');
 
-    // Checkout
+    // Checkout & Order
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-    Route::post('/profile/order/{id}/cancel', [App\Http\Controllers\ProfileController::class, 'cancelOrder'])->name('order.cancel');
+    Route::post('/profile/order/{id}/cancel', [ProfileController::class, 'cancelOrder'])->name('order.cancel');
 });

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
@@ -37,25 +38,26 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            // Validasi email agar HARUS UNIK (tidak boleh daftar 2x)
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-        ], [
-            'email.unique' => 'Email ini sudah terdaftar. Silakan gunakan email lain atau langsung Login.'
         ]);
 
-        // Buat User Baru
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Password di-enkripsi
+            'password' => Hash::make($request->password),
             'role' => 'customer'
         ]);
 
-        // Langsung Login-kan setelah sukses daftar
+        // --- BARIS KUNCI: Memicu Pengiriman Email Verifikasi ---
+        event(new Registered($user));
+
+        \Illuminate\Support\Facades\Cache::put('verify_timer_' . $user->id, now()->addMinutes(60), now()->addMinutes(60));
+
         Auth::login($user);
 
-        return redirect('/profil')->with('success', 'Akun berhasil dibuat! Silakan lengkapi data profil Anda.');
+        // Lempar ke halaman notifikasi verifikasi
+        return redirect()->route('verification.notice');
     }
 
     // --- FITUR SSO GOOGLE ---
@@ -85,6 +87,7 @@ class AuthController extends Controller
                     // Buat password acak karena dia login pakai Google
                     'password' => Hash::make(Str::random(16)), 
                     'profile_picture' => $googleUser->avatar, // Ambil foto profil dari Google
+                    'email_verified_at' => now(),
                     'role' => 'customer'
                 ]);
                 Auth::login($newUser);

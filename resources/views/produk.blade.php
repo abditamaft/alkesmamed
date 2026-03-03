@@ -175,15 +175,27 @@
 
                     <div class="absolute bottom-4 left-0 right-0 justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 hidden md:flex z-20">
                         
-                        <button @click.prevent="addToCart({{ $p->variants->first()->id ?? 'null' }})" type="button" title="Tambah ke Keranjang" class="bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-blue-600 hover:text-white shadow-md transition flex items-center justify-center relative z-30 transform hover:scale-110">
-                            <i class="fa-solid fa-cart-shopping text-xs"></i>
-                        </button>
+                        @if(Auth::check() && !Auth::user()->hasVerifiedEmail())
+                            <a href="{{ route('verification.notice') }}" title="Tambah ke Keranjang" class="bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-blue-600 hover:text-white shadow-md transition flex items-center justify-center relative z-30 transform hover:scale-110">
+                                <i class="fa-solid fa-cart-shopping text-xs"></i>
+                            </a>
+                        @else
+                            <button @click.prevent="addToCart({{ $p->variants->first()->id ?? 'null' }})" type="button" title="Tambah ke Keranjang" class="bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-blue-600 hover:text-white shadow-md transition flex items-center justify-center relative z-30 transform hover:scale-110">
+                                <i class="fa-solid fa-cart-shopping text-xs"></i>
+                            </button>
+                        @endif
 
-                        <button @click.prevent="toggleWishlist()" type="button" title="Favorit" 
-                                class="w-10 h-10 rounded-full shadow-md transition-all duration-300 flex items-center justify-center relative z-30 transform hover:scale-110"
-                                :class="isWishlisted ? 'bg-red-500 text-white' : 'bg-white text-gray-800 hover:bg-red-50 hover:text-red-500'">
-                            <i class="text-xs transition-colors duration-300" :class="isWishlisted ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
-                        </button>
+                        @if(Auth::check() && !Auth::user()->hasVerifiedEmail())
+                            <a href="{{ route('verification.notice') }}" title="Favorit" class="w-10 h-10 rounded-full shadow-md transition-all duration-300 flex items-center justify-center relative z-30 transform hover:scale-110 bg-white text-gray-800 hover:bg-red-50 hover:text-red-500">
+                                <i class="fa-regular fa-heart text-xs transition-colors duration-300"></i>
+                            </a>
+                        @else
+                            <button @click.prevent="toggleWishlist()" type="button" title="Favorit" 
+                                    class="w-10 h-10 rounded-full shadow-md transition-all duration-300 flex items-center justify-center relative z-30 transform hover:scale-110"
+                                    :class="isWishlisted ? 'bg-red-500 text-white' : 'bg-white text-gray-800 hover:bg-red-50 hover:text-red-500'">
+                                <i class="text-xs transition-colors duration-300" :class="isWishlisted ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                            </button>
+                        @endif
 
                         <a href="{{ route('produk.show', $p->id) }}" title="Lihat Detail" class="bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-blue-600 hover:text-white shadow-md transition flex items-center justify-center">
                             <i class="fa-solid fa-eye text-xs"></i>

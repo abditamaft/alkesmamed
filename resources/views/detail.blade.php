@@ -226,16 +226,28 @@
                             <button @click="if(qty < selectedVariant.stock) qty++" class="text-gray-400 hover:text-blue-500 transition px-1"><i class="fa-solid fa-plus text-xs"></i></button>
                         </div>
 
-                        <button @click.prevent="addToCart()" type="button" class="flex-1 bg-blue-500 text-white px-4 md:px-8 py-3 rounded-full font-bold text-sm hover:bg-blue-600 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/30 text-center disabled:opacity-50 disabled:cursor-not-allowed" :disabled="selectedVariant.stock < 1">
-                            <i class="fa-solid fa-cart-shopping mr-2"></i> Tambah Keranjang
-                        </button>
+                        @if(Auth::check() && !Auth::user()->hasVerifiedEmail())
+                            <a href="{{ route('verification.notice') }}" class="flex-1 bg-blue-500 text-white px-4 md:px-8 py-3 rounded-full font-bold text-sm hover:bg-blue-600 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/30 flex items-center justify-center">
+                                <i class="fa-solid fa-cart-shopping mr-2"></i> Tambah Keranjang
+                            </a>
+                        @else
+                            <button @click.prevent="addToCart()" type="button" class="flex-1 bg-blue-500 text-white px-4 md:px-8 py-3 rounded-full font-bold text-sm hover:bg-blue-600 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/30 text-center disabled:opacity-50 disabled:cursor-not-allowed" :disabled="selectedVariant.stock < 1">
+                                <i class="fa-solid fa-cart-shopping mr-2"></i> Tambah Keranjang
+                            </button>
+                        @endif
 
                         <div class="flex gap-3 mt-2 sm:mt-0">
-                            <button @click.prevent="toggleWishlist()" type="button" :title="isWishlisted ? 'Sudah di Favorit' : 'Tambah ke Wishlist'" 
-                                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all group hover:shadow-md"
-                                    :class="isWishlisted ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-200 md:border-gray-100 text-gray-600 hover:text-red-500 hover:border-red-100'">
-                                <i class="transition-transform group-hover:scale-110" :class="isWishlisted ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
-                            </button>
+                            @if(Auth::check() && !Auth::user()->hasVerifiedEmail())
+                                <a href="{{ route('verification.notice') }}" title="Tambah ke Wishlist" class="w-10 h-10 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all group hover:shadow-md bg-white border-gray-200 md:border-gray-100 text-gray-600 hover:text-red-500 hover:border-red-100">
+                                    <i class="fa-regular fa-heart transition-transform group-hover:scale-110"></i>
+                                </a>
+                            @else
+                                <button @click.prevent="toggleWishlist()" type="button" :title="isWishlisted ? 'Sudah di Favorit' : 'Tambah ke Wishlist'" 
+                                        class="w-10 h-10 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all group hover:shadow-md"
+                                        :class="isWishlisted ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-200 md:border-gray-100 text-gray-600 hover:text-red-500 hover:border-red-100'">
+                                    <i class="transition-transform group-hover:scale-110" :class="isWishlisted ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>
