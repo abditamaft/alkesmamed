@@ -1,11 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="bg-white px-4 md:px-10 py-6 md:py-10 flex flex-col lg:flex-row gap-6 md:gap-8 min-h-screen">
+<div class="bg-white px-4 md:px-10 py-6 md:py-10 flex flex-col lg:flex-row gap-6 md:gap-8 min-h-screen" x-data="{ openFilter: false }">
     
-    <aside class="w-full lg:w-1/4 xl:w-[280px] flex-shrink-0 relative">
+    <div x-show="openFilter" x-transition.opacity class="fixed inset-0 bg-black/60 z-[60] lg:hidden" @click="openFilter = false" x-cloak></div>
+
+    <aside :class="openFilter ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+           class="fixed lg:static top-0 left-0 h-screen lg:h-auto w-[280px] lg:w-1/4 xl:w-[280px] bg-white lg:bg-transparent z-[70] lg:z-auto transition-transform duration-300 ease-in-out flex-shrink-0 shadow-2xl lg:shadow-none">
         
-        <div class="sticky top-28 flex flex-col gap-6">
+        <div class="flex justify-between items-center p-5 lg:hidden border-b border-gray-100 bg-white">
+            <h2 class="font-bold text-gray-800 text-lg"><i class="fa-solid fa-filter mr-2 text-blue-500"></i> Filter</h2>
+            <button @click="openFilter = false" class="text-gray-400 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 hover:bg-red-50 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="p-5 lg:p-0 sticky top-28 flex flex-col gap-6 h-[calc(100vh-4rem)] lg:h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar lg:pr-2 pb-10">
             
             <form action="{{ route('produk.index') }}" method="GET" class="flex flex-col gap-6 w-full">
                 
@@ -32,16 +42,34 @@
                     <h3 class="text-base md:text-lg font-bold mb-4 border-b-2 border-blue-500 w-max pb-1">Varian Ukuran</h3>
                     <ul class="space-y-3 text-xs md:text-sm text-gray-600 font-medium max-h-[150px] overflow-y-auto custom-scrollbar pr-3">
                         @foreach($sizes as $size)
-                        <li class="hover:text-blue-600 cursor-pointer {{ request('ukuran') == $size->variant_name ? 'text-blue-600 font-bold' : '' }}">
-                            <a href="{{ request()->fullUrlWithQuery(['ukuran' => $size->variant_name]) }}" class="block w-full">
+                        
+                        @php
+                            $isUkuranActive = request('ukuran') == $size->variant_name;
+                            $ukuranUrl = $isUkuranActive ? route('produk.index', request()->except('ukuran')) : request()->fullUrlWithQuery(['ukuran' => $size->variant_name]);
+                        @endphp
+
+                        <li class="hover:text-blue-600 cursor-pointer transition-colors {{ $isUkuranActive ? 'text-blue-600 font-bold' : '' }}">
+                            <a href="{{ $ukuranUrl }}" class="block w-full">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded border {{ request('ukuran') == $size->variant_name ? 'bg-blue-500 border-blue-500' : 'border-gray-300 bg-white' }}"></div>
+                                    
+                                    <div class="w-3.5 h-3.5 rounded border flex items-center justify-center transition-all {{ $isUkuranActive ? 'bg-blue-500 border-blue-500' : 'border-gray-300 bg-white' }}">
+                                        @if($isUkuranActive)
+                                            <i class="fa-solid fa-check text-white text-[8px]"></i>
+                                        @endif
+                                    </div>
+                                    
                                     <span class="truncate">{{ $size->variant_name }}</span>
                                 </div>
                             </a>
                         </li>
                         @endforeach
                     </ul>
+
+                    @if(request('ukuran'))
+                        <a href="{{ route('produk.index', request()->except('ukuran')) }}" class="text-[10px] text-red-500 mt-4 flex items-center gap-1 font-bold hover:underline transition-all">
+                            <i class="fa-solid fa-xmark"></i> Reset Ukuran
+                        </a>
+                    @endif
                 </div>
 
                 <div class="bg-[#f8f8f8] p-5 md:p-6 rounded-2xl border border-gray-200/60 shadow-sm w-full" 
@@ -92,6 +120,12 @@
 
     <div class="w-full lg:w-3/4">
         
+        <div class="lg:hidden mb-6">
+            <button @click="openFilter = true" class="w-full bg-blue-50 text-blue-600 border border-blue-200 font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:bg-blue-100 transition shadow-sm">
+                <i class="fa-solid fa-filter"></i> Filter & Kategori Produk
+            </button>
+        </div>
+
         <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
             @forelse($allProducts as $index => $p)
             @php
@@ -158,9 +192,19 @@
                 class="group rounded-xl transition-all duration-700 ease-out relative border border-gray-100 hover:shadow-lg flex flex-col h-full bg-white overflow-hidden"
                 style="transition-delay: {{ ($index % 4) * 100 }}ms">
                 
+                @php
+                    // 1. Cek apakah produk dibuat dalam 3 hari terakhir
+                    $isNewByDate = $p->created_at && $p->created_at->diffInDays(now()) <= 3;
+                    
+                    // 2. Cek apakah produk ini termasuk 3 produk paling terakhir diupload
+                    $isNewestTop3 = in_array($p->id, $newestProductIds ?? []);
+                @endphp
+
+                @if($isNewByDate || $isNewestTop3)
                 <div class="absolute top-2 left-2 z-10">
-                    <span class="bg-yellow-500 text-white text-[8px] md:text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">NEW</span>
+                    <span class="bg-yellow-500 text-white text-[8px] md:text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider shadow-sm">NEW</span>
                 </div>
+                @endif
                 
                 <div class="h-48 md:h-60 w-full relative overflow-hidden bg-white">
                     <a href="{{ route('produk.show', $p->id) }}" class="block w-full h-full">
@@ -213,7 +257,11 @@
                     </a>
                     
                     <div class="mt-auto pt-2 flex items-baseline">
-                        <span class="text-blue-600 font-bold text-sm md:text-base">Rp{{ number_format($p->starting_price, 0, ',', '.') }}</span>
+                        @php
+                            // Ambil harga termurah dari semua varian produk ini
+                            $termurah = $p->variants->min('price');
+                        @endphp
+                        <span class="text-blue-600 font-bold text-sm md:text-base">Mulai Rp{{ number_format($termurah, 0, ',', '.') }}</span>
                     </div>
                 </div>
                 <div x-show="showSuccessModal" 
@@ -243,4 +291,25 @@
         
     </div>
 </div>
+<style>
+    /* CSS Scrollbar Elegan untuk Sidebar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: transparent; 
+        border-radius: 10px;
+        transition: background-color 0.3s;
+    }
+    /* Scrollbar hanya terlihat saat area sidebar di-hover/disentuh mouse */
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1; 
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8; 
+    }
+</style>
 @endsection

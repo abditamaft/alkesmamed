@@ -11,26 +11,23 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Siapkan Query Dasar (Ambil produk yang aktif beserta relasinya)
         $query = Product::with(['images', 'mainImage', 'category', 'variants'])->where('is_active', 1);
 
-        // 2. Logika Filter Kategori
-        if ($request->has('kategori')) {
+        // REVISI: Ubah has menjadi filled agar tidak error jika dikosongi
+        if ($request->filled('kategori')) {
             $query->whereHas('category', function($q) use ($request) {
                 $q->where('slug', $request->kategori);
             });
         }
 
-        // 3. Logika Filter Ukuran (Pengganti Brands)
-        if ($request->has('ukuran')) {
+        // REVISI: Ubah has menjadi filled
+        if ($request->filled('ukuran')) {
             $query->whereHas('variants', function($q) use ($request) {
                 $q->where('variant_name', $request->ukuran);
             });
         }
 
-        // 4. Logika Filter Harga Minimal & Maksimal yang Lebih Cerdas
         if ($request->filled('min_price') || $request->filled('max_price')) {
-            // Jika min kosong, paksa jadi 0. Jika max kosong, paksa jadi 999 juta.
             $min = $request->filled('min_price') ? $request->min_price : 0;
             $max = $request->filled('max_price') ? $request->max_price : 999999999;
 
@@ -39,17 +36,13 @@ class ProductController extends Controller
             });
         }
 
-        // 5. Eksekusi Query dengan Paginasi (Misal 8 produk per halaman)
         $allProducts = $query->paginate(60);
-
-        // 6. Ambil data untuk Sidebar Kiri
-        // Mengambil semua kategori beserta jumlah produk di dalamnya
         $categories = Category::withCount('products')->get(); 
-        
-        // Mengambil daftar nama ukuran yang ada (Small, Medium, dst) unik tidak dobel
         $sizes = ProductVariant::select('variant_name')->distinct()->get();
 
-        return view('produk', compact('allProducts', 'categories', 'sizes'));
+        $newestProductIds = Product::where('is_active', 1)->orderBy('created_at', 'desc')->take(3)->pluck('id')->toArray();
+
+        return view('produk', compact('allProducts', 'categories', 'sizes', 'newestProductIds'));
     }
 
     // Fungsi show() untuk Detail Produk (Kita biarkan dulu atau sesuaikan nanti)

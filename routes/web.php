@@ -23,6 +23,7 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{id}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/kontak', [ContactController::class, 'index'])->name('kontak.index');
 Route::get('/api/search-products', [ProductController::class, 'searchApi'])->name('api.search');
+Route::get('/api/blog/search', [BlogController::class, 'searchApi'])->name('api.blog.search');
 
 // ==========================================================
 // 2. RUTE GUEST (Hanya sebelum login)
