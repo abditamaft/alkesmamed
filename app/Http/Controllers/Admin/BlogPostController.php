@@ -58,7 +58,7 @@ class BlogPostController extends Controller
             'slug' => Str::slug($request->title) . '-' . time(),
             'content' => $request->content,
             'image_path' => $imageName,
-            'is_published' => $request->has('is_published') ? 1 : 0,
+            'is_published' => $request->is_published,
             'views' => 0, // Default 0
         ]);
 
@@ -90,7 +90,7 @@ class BlogPostController extends Controller
             'slug' => Str::slug($request->title) . '-' . time(),
             'blog_category_id' => $request->blog_category_id,
             'content' => $request->content,
-            'is_published' => $request->has('is_published') ? 1 : 0,
+            'is_published' => $request->is_published,
         ];
 
         // Jika Admin ganti Cover

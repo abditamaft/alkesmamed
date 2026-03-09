@@ -71,7 +71,8 @@
             <div class="mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between" x-data="{ isPublished: {{ $post->is_published ? 'true' : 'false' }} }">
                 <span class="text-sm font-bold text-blue-800">Status Publish</span>
                 
-                <input type="hidden" name="is_published" :value="isPublished ? '1' : '0'">
+                <input type="hidden" name="is_published" value="0">
+                <input type="checkbox" name="is_published" value="1" x-model="isPublished" style="display: none;">
                 
                 <button type="button" @click="isPublished = !isPublished" 
                     :class="isPublished ? 'bg-blue-600' : 'bg-gray-300'" 
