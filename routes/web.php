@@ -12,6 +12,10 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Middleware\IsAdmin;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 
 // ==========================================================
 // 1. RUTE PUBLIK (Bebas akses)
@@ -22,8 +26,8 @@ Route::get('/detail-produk/{id}', [ProductController::class, 'show'])->name('pro
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{id}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/kontak', [ContactController::class, 'index'])->name('kontak.index');
-Route::get('/api/search-products', [ProductController::class, 'searchApi'])->name('api.search');
 Route::get('/api/blog/search', [BlogController::class, 'searchApi'])->name('api.blog.search');
+Route::get('/api/produk/search', [App\Http\Controllers\ProductController::class, 'searchApi']);
 
 // ==========================================================
 // 2. RUTE GUEST (Hanya sebelum login)
@@ -95,4 +99,57 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::post('/profile/order/{id}/cancel', [ProfileController::class, 'cancelOrder'])->name('order.cancel');
+});
+Route::prefix('admin')->group(function () {
+    
+    // Rute Login (Guest)
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+
+    // Rute yang Dilindungi (Wajib Login & Wajib Admin)
+    Route::middleware([IsAdmin::class])->group(function () {
+        
+        // GANTI RUTE /admin MENJADI INI:
+        Route::get('/', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+        
+        // 👇 TAMBAHKAN 3 BARIS INI UNTUK KATEGORI 👇
+        Route::get('/kategori', [CategoryController::class, 'index'])->name('admin.categories.index');
+        Route::post('/kategori', [CategoryController::class, 'store'])->name('admin.categories.store');
+        Route::get('/kategori/{id}/edit', [CategoryController::class, 'edit'])->name('admin.categories.edit');
+        Route::put('/kategori/{id}', [CategoryController::class, 'update'])->name('admin.categories.update');
+        Route::delete('/kategori/{id}', [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+        // Rute AJAX Produk (Realtime Status & Search)
+        Route::post('/produk/{id}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('admin.products.toggle');
+        Route::get('/produk/search', [AdminProductController::class, 'searchAdmin'])->name('admin.products.search');
+        // CRUD PRODUK
+        Route::resource('produk', AdminProductController::class, [
+            'names' => 'admin.products'
+        ]);
+        // AJAX Badge Sidebar
+        Route::get('/pesanan/badge', [App\Http\Controllers\Admin\OrderController::class, 'badgeCount'])->name('admin.orders.badge');
+        
+        // Rute Order
+        Route::resource('pesanan', App\Http\Controllers\Admin\OrderController::class)->names('admin.orders');
+        // MANAJEMEN ONGKIR & WILAYAH
+        Route::get('/ongkir', [App\Http\Controllers\Admin\ShippingController::class, 'index'])->name('admin.shipping.index');
+        Route::get('/ongkir/search', [App\Http\Controllers\Admin\ShippingController::class, 'search'])->name('admin.shipping.search');
+        Route::post('/ongkir/provinsi', [App\Http\Controllers\Admin\ShippingController::class, 'storeProvince'])->name('admin.shipping.storeProvince');
+        Route::put('/ongkir/provinsi/{id}', [App\Http\Controllers\Admin\ShippingController::class, 'updateProvince'])->name('admin.shipping.updateProvince');
+        Route::delete('/ongkir/provinsi/{id}', [App\Http\Controllers\Admin\ShippingController::class, 'destroyProvince'])->name('admin.shipping.destroyProvince');
+        
+        Route::get('/ongkir/{id}', [App\Http\Controllers\Admin\ShippingController::class, 'showProvince'])->name('admin.shipping.show');
+        Route::post('/ongkir/{id}/kota', [App\Http\Controllers\Admin\ShippingController::class, 'storeCity'])->name('admin.shipping.storeCity');
+        Route::put('/ongkir/kota/{id}', [App\Http\Controllers\Admin\ShippingController::class, 'updateCity'])->name('admin.shipping.updateCity');
+        Route::delete('/ongkir/kota/{id}', [App\Http\Controllers\Admin\ShippingController::class, 'destroyCity'])->name('admin.shipping.destroyCity');
+        // MANAJEMEN ARTIKEL / BLOG
+        Route::resource('kategori-blog', App\Http\Controllers\Admin\BlogCategoryController::class)
+             ->names('admin.blog_categories')
+             ->except(['create', 'show', 'edit']); // Kita matikan view yang tidak dipakai karena kita pakai sistem 1 Halaman
+        // CRUD SEMUA ARTIKEL
+        Route::post('/blogs/{id}/toggle-status', [App\Http\Controllers\Admin\BlogPostController::class, 'toggleStatus'])->name('admin.blogs.toggle');
+        Route::get('/blogs/search', [App\Http\Controllers\Admin\BlogPostController::class, 'searchAdmin'])->name('admin.blogs.search');
+        Route::resource('blogs', App\Http\Controllers\Admin\BlogPostController::class)->names('admin.blogs');
+    });  
 });

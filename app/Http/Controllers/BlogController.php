@@ -56,14 +56,36 @@ class BlogController extends Controller
         return response()->json($results);
     }
 
-    public function show($id) // Nanti bisa diganti pakai $slug
+    public function show($id)
     {
+        // 1. Cari artikel beserta relasi kategori dan penulisnya (admin)
         $article = BlogPost::with(['category', 'author'])->findOrFail($id);
         
-        // Tambah jumlah view setiap kali dibaca
-        $article->increment('views');
+        // 2. Tambah jumlah view (VERSI PRO: ANTI SPAM REFRESH) 🔥
+        $sessionKey = 'blog_viewed_' . $article->id;
+        if (!session()->has($sessionKey)) {
+            $article->increment('views');      // Nambah ke database
+            session()->put($sessionKey, true); // Kunci gembok session-nya
+        }
 
-        $popular_posts = BlogPost::where('is_published', 1)->orderBy('views', 'desc')->take(3)->get();
-        return view('detail-blog', compact('article', 'popular_posts'));
+        // 3. Ambil data untuk Sidebar
+        $categories = BlogCategory::withCount(['posts' => function($q) {
+            $q->where('is_published', 1);
+        }])->get();
+
+        $popular_posts = BlogPost::where('is_published', 1)
+                                 ->orderBy('views', 'desc')
+                                 ->take(3)
+                                 ->get();
+
+        // 4. Ambil 6 Artikel Serupa (kategori sama, kecuali artikel yang sedang dibaca)
+        $related_posts = BlogPost::where('blog_category_id', $article->blog_category_id)
+                                 ->where('id', '!=', $article->id)
+                                 ->where('is_published', 1)
+                                 ->inRandomOrder()
+                                 ->take(6)
+                                 ->get();
+
+        return view('detail-blog', compact('article', 'popular_posts', 'categories', 'related_posts'));
     }
 }

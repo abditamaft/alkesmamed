@@ -16,6 +16,7 @@
     $navCategories = \App\Models\Category::with(['products' => function($query) {
         $query->take(6); 
     }])->get();
+    $blogCategories = \App\Models\BlogCategory::orderBy('name', 'asc')->get();
 @endphp
 <header x-data="{ 
     isSticky: false, 
@@ -149,6 +150,20 @@ class="transition-all duration-300 font-sans">
                     class="absolute left-0 mt-0 w-56 bg-white border border-gray-100 shadow-xl rounded-md z-50">
                     <a href="/blog" class="block px-4 py-3 border-b hover:bg-blue-50 hover:text-blue-600 text-sm font-normal">Kesehatan Terbaru</a>
                     <a href="/blog" class="block px-4 py-3 hover:bg-blue-50 hover:text-blue-600 text-sm font-normal">Tips Medis</a>
+                </div><div x-show="openMenu === 'blog'" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 transform -translate-y-4"
+                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                     x-cloak
+                     class="absolute left-0 mt-0 w-56 bg-white border border-gray-100 shadow-xl rounded-md z-50 max-h-60 overflow-y-auto custom-scrollbar">
+                     
+                     @forelse($blogCategories as $bCat)
+                         <a href="{{ route('blog.index', ['kategori' => $bCat->slug]) }}" class="block px-4 py-3 border-b border-gray-50 hover:bg-blue-50 hover:text-blue-600 text-sm font-normal transition">
+                             {{ $bCat->name }}
+                         </a>
+                     @empty
+                         <span class="block px-4 py-3 text-sm text-gray-400 italic">Belum ada kategori</span>
+                     @endforelse
                 </div>
             </li>
 
@@ -156,7 +171,63 @@ class="transition-all duration-300 font-sans">
         </ul>
 
         <div class="flex items-center gap-3 md:gap-5 text-lg md:text-xl text-gray-700">
-            <i class="fa-solid fa-magnifying-glass cursor-pointer hover:text-blue-600 transition-colors hidden sm:block"></i>
+            <div class="relative flex items-center z-50" x-data="{ 
+                searchOpen: false, 
+                query: '', 
+                results: [], 
+                loading: false,
+                search() {
+                    if(this.query.length < 2) { this.results = []; return; }
+                    this.loading = true;
+                    // Fetch ke API Produk
+                    fetch(`/api/produk/search?q=${this.query}`)
+                        .then(res => res.json())
+                        .then(data => { this.results = data; this.loading = false; })
+                        .catch(() => { this.loading = false; });
+                }
+            }">
+                <button @click="searchOpen = !searchOpen; if(searchOpen) $nextTick(() => $refs.searchInput.focus())" class="hidden sm:block text-gray-700 hover:text-blue-600 transition-colors outline-none relative z-10">
+                    <i class="fa-solid fa-magnifying-glass text-xl md:text-2xl mt-1"></i>
+                </button>
+
+                <div x-show="searchOpen" @click.outside="searchOpen = false" 
+                     x-transition:enter="transition ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-x-8" 
+                     x-transition:enter-end="opacity-100 translate-x-0" 
+                     x-transition:leave="transition ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-x-0" 
+                     x-transition:leave-end="opacity-0 translate-x-8" 
+                     class="absolute right-full mr-4 top-1/2 -translate-y-1/2 hidden sm:block w-[300px]" x-cloak>
+                     
+                    <div class="relative w-full">
+                        <input x-ref="searchInput" type="text" x-model="query" @input.debounce.300ms="search" placeholder="Cari alat medis..." 
+                               class="w-full bg-white border border-gray-200 shadow-lg rounded-full pl-5 pr-10 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1">
+                        
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                            <i x-show="loading" class="fa-solid fa-spinner fa-spin text-blue-500 text-sm"></i>
+                            <button x-show="!loading" @click="searchOpen = false; query = ''; results = []" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div x-show="results.length > 0" class="absolute top-full right-0 mt-3 w-[350px] bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-80 overflow-y-auto custom-scrollbar">
+                        <template x-for="item in results" :key="item.id">
+                            <a :href="`/detail-produk/${item.id}`" class="flex gap-3 p-3 hover:bg-blue-50 border-b border-gray-50 transition group">
+                                <div class="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden border border-gray-100 flex-shrink-0">
+                                    <img :src="item.image" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex-grow">
+                                    <h4 class="text-xs font-bold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition" x-text="item.name"></h4>
+                                    <span class="text-[10px] font-bold text-gray-500 block mt-1" x-text="item.category"></span>
+                                </div>
+                            </a>
+                        </template>
+                    </div>
+
+                    <div x-show="query.length >= 2 && results.length === 0 && !loading" style="display: none;" class="absolute top-full right-0 mt-3 w-[350px] bg-white rounded-xl shadow-2xl border border-gray-100 p-4 text-center">
+                        <span class="text-xs font-bold text-gray-500">Produk tidak ditemukan.</span>
+                    </div>
+                </div>
+            </div>
             
             <a href="{{ route('wishlist.index') }}" class="relative flex items-center hover:text-blue-600 transition-colors py-2"
             x-data="{ count: {{ auth()->check() ? auth()->user()->wishlists()->count() : 0 }} }"
@@ -283,6 +354,42 @@ class="transition-all duration-300 font-sans">
                         <i class="fa-regular fa-user text-lg"></i> Hi, {{ strtok(Auth::user()->name, ' ') }}
                     </a>
                 @endauth
+            </div>
+            <div class="mb-6 relative" x-data="{ 
+                query: '', results: [], loading: false,
+                search() {
+                    if(this.query.length < 2) { this.results = []; return; }
+                    this.loading = true;
+                    fetch(`/api/produk/search?q=${this.query}`)
+                        .then(res => res.json())
+                        .then(data => { this.results = data; this.loading = false; });
+                }
+            }">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" x-model="query" @keyup.debounce.300ms="search" placeholder="Cari alat medis..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-blue-500">
+                <i x-show="loading" class="fa-solid fa-spinner fa-spin absolute right-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+
+                <div x-show="results.length > 0" class="mt-2 bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto w-full custom-scrollbar">
+                    <template x-for="item in results" :key="item.id">
+                        <a :href="`/detail-produk/${item.id}`" class="flex items-center gap-3 p-3 border-b border-gray-50 hover:bg-gray-50 text-xs">
+                            <img :src="item.image" class="w-8 h-8 rounded object-cover">
+                            <span class="font-bold text-gray-800 line-clamp-1" x-text="item.name"></span>
+                        </a>
+                    </template>
+                </div>
+            </div>
+
+            <div x-data="{ openSub: false }" class="border-b border-gray-100">
+                <button @click="openSub = !openSub" class="flex justify-between items-center w-full py-3 hover:text-blue-600">
+                    Blog <i class="fa-solid fa-chevron-down text-[10px] transition-transform" :class="openSub ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openSub" x-transition class="pb-3 pl-4 space-y-3 font-medium text-gray-500 text-xs max-h-48 overflow-y-auto custom-scrollbar">
+                    @forelse($blogCategories as $bCat)
+                        <a href="{{ route('blog.index', ['kategori' => $bCat->slug]) }}" class="block hover:text-blue-600">{{ $bCat->name }}</a>
+                    @empty
+                        <span class="block text-gray-300 italic">Belum ada kategori</span>
+                    @endforelse
+                </div>
             </div>
 
             <a href="/" class="py-3 border-b border-gray-100 hover:text-blue-600">Beranda</a>

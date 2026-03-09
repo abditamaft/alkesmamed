@@ -9,11 +9,16 @@ class City extends Model
 {
     use HasFactory;
 
-    // Tambahkan 'shipping_cost' ke sini Bos!
     protected $fillable = ['province_id', 'type', 'name'];
 
     public function province()
     {
         return $this->belongsTo(Province::class);
+    }
+
+    // TAMBAHKAN RELASI INI: 1 Kota punya 1 Tarif Ongkir
+    public function shippingRate()
+    {
+        return $this->hasOne(ShippingRate::class);
     }
 }

@@ -66,28 +66,27 @@ class ProductController extends Controller
 
         return view('detail', compact('product', 'related_products', 'featured_products'));
     }
-    // 4. Fungsi Baru untuk Live Search Sidebar
+    // 4. Fungsi Live Search Sidebar (Sudah Disesuaikan Formatnya)
     public function searchApi(Request $request)
     {
         $query = $request->get('q');
         
         if (strlen($query) < 2) return response()->json([]); // Minimal 2 huruf
 
-        $products = Product::with(['mainImage', 'variants'])
+        $products = Product::with(['mainImage', 'category'])
             ->where('name', 'LIKE', "%{$query}%")
             ->where('is_active', 1)
-            ->take(5) // Tampilkan max 5 rekomendasi
+            ->take(6) // Tampilkan max 6 rekomendasi
             ->get()
             ->map(function($p) {
                 return [
+                    'id' => $p->id,
                     'name' => $p->name,
-                    'price' => 'Rp' . number_format($p->starting_price, 0, ',', '.'),
+                    'category' => $p->category->name ?? 'Umum', // Wajib ada untuk UI
                     'image' => $p->mainImage ? asset('images/' . $p->mainImage->image_path) : asset('images/default.jpg'),
-                    'url' => route('produk.show', $p->id)
                 ];
             });
 
         return response()->json($products);
-    }
-    
+    } 
 }
