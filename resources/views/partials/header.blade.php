@@ -176,7 +176,7 @@ class="transition-all duration-300 font-sans">
                 query: '', 
                 results: [], 
                 loading: false,
-                search() {
+                searchData() {
                     if(this.query.length < 2) { this.results = []; return; }
                     this.loading = true;
                     // Fetch ke API Produk
@@ -199,15 +199,19 @@ class="transition-all duration-300 font-sans">
                      x-transition:leave-end="opacity-0 translate-x-8" 
                      class="absolute right-full mr-4 top-1/2 -translate-y-1/2 hidden sm:block w-[300px]" x-cloak>
                      
-                    <div class="relative w-full">
-                        <input x-ref="searchInput" type="text" x-model="query" @input.debounce.300ms="search" placeholder="Cari alat medis..." 
-                               class="w-full bg-white border border-gray-200 shadow-lg rounded-full pl-5 pr-10 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1">
+                    <form action="{{ route('produk.index') }}" method="GET" class="relative w-full">
+                        <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition z-10">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        
+                        <input x-ref="searchInput" type="text" name="search" x-model="query" @input.debounce.300ms="searchData" placeholder="Ketik lalu tekan Enter..." 
+                               class="w-full bg-white border border-gray-200 shadow-lg rounded-full pl-11 pr-10 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1">
                         
                         <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
-                            <i x-show="loading" class="fa-solid fa-spinner fa-spin text-blue-500 text-sm"></i>
-                            <button x-show="!loading" @click="searchOpen = false; query = ''; results = []" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                            <i x-show="loading" class="fa-solid fa-spinner fa-spin text-blue-500 text-sm" style="display: none;"></i>
+                            <button type="button" x-show="!loading" @click="searchOpen = false; query = ''; results = []" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
                         </div>
-                    </div>
+                    </form>
                     
                     <div x-show="results.length > 0" class="absolute top-full right-0 mt-3 w-[350px] bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-80 overflow-y-auto custom-scrollbar">
                         <template x-for="item in results" :key="item.id">
@@ -357,7 +361,7 @@ class="transition-all duration-300 font-sans">
             </div>
             <div class="mb-6 relative" x-data="{ 
                 query: '', results: [], loading: false,
-                search() {
+                searchData() {
                     if(this.query.length < 2) { this.results = []; return; }
                     this.loading = true;
                     fetch(`/api/produk/search?q=${this.query}`)
@@ -365,14 +369,20 @@ class="transition-all duration-300 font-sans">
                         .then(data => { this.results = data; this.loading = false; });
                 }
             }">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" x-model="query" @keyup.debounce.300ms="search" placeholder="Cari alat medis..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-blue-500">
-                <i x-show="loading" class="fa-solid fa-spinner fa-spin absolute right-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                <form action="{{ route('produk.index') }}" method="GET" class="w-full relative">
+                    <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    
+                    <input type="text" name="search" x-model="query" @input.debounce.300ms="searchData" placeholder="Cari alat medis... (Tekan Enter)" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    
+                    <i x-show="loading" class="fa-solid fa-spinner fa-spin absolute right-4 top-1/2 -translate-y-1/2 text-blue-500" style="display: none;"></i>
+                </form>
 
-                <div x-show="results.length > 0" class="mt-2 bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto w-full custom-scrollbar">
+                <div x-show="results.length > 0" @click.outside="results = []" class="absolute z-50 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto w-full custom-scrollbar" style="display: none;">
                     <template x-for="item in results" :key="item.id">
-                        <a :href="`/detail-produk/${item.id}`" class="flex items-center gap-3 p-3 border-b border-gray-50 hover:bg-gray-50 text-xs">
-                            <img :src="item.image" class="w-8 h-8 rounded object-cover">
+                        <a :href="`/detail-produk/${item.id}`" class="flex items-center gap-3 p-3 border-b border-gray-50 hover:bg-gray-50 text-xs transition">
+                            <img :src="item.image" class="w-8 h-8 rounded object-cover border border-gray-100">
                             <span class="font-bold text-gray-800 line-clamp-1" x-text="item.name"></span>
                         </a>
                     </template>

@@ -11,10 +11,22 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostController extends Controller
 {
-    // 1. TAMPILKAN SEMUA ARTIKEL
-    public function index()
+    // 1. TAMPILKAN SEMUA ARTIKEL (DENGAN FITUR FILTER PENCARIAN)
+    public function index(Request $request)
     {
-        $posts = BlogPost::with(['category', 'author'])->latest()->paginate(10);
+        $query = BlogPost::with(['category', 'author'])->latest();
+
+        // Tangkap kata kunci jika Admin menekan Enter
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('category', function($q) use ($request) {
+                      $q->where('name', 'like', '%' . $request->search . '%');
+                  });
+        }
+
+        // withQueryString() agar pagination tidak menghilangkan filter
+        $posts = $query->paginate(10)->withQueryString();
+        
         return view('admin.blogs.index', compact('posts'));
     }
 

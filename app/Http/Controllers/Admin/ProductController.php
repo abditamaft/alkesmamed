@@ -13,9 +13,20 @@ use Illuminate\Support\Str;
 class ProductController extends Controller
 {
     // 1. TAMPILKAN DAFTAR PRODUK
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'mainImage', 'variants'])->latest()->paginate(10);
+        $query = Product::with(['category', 'mainImage', 'variants'])->latest();
+
+        // Jika ada request pencarian (tekan Enter)
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('category', function($q) use ($request) {
+                      $q->where('name', 'like', '%' . $request->search . '%');
+                  });
+        }
+
+        $products = $query->paginate(10)->withQueryString();
+        
         return view('admin.products.index', compact('products'));
     }
 
@@ -98,13 +109,25 @@ class ProductController extends Controller
         $product->delete(); // Varian & Gambar di database akan ikut terhapus otomatis jika pakai cascade, atau terhapus biasa.
         return back()->with('success', 'Produk berhasil dihapus bersih!');
     }
-    // 5. FITUR: LIVE SEARCH ADMIN
+    // 5. FITUR: LIVE SEARCH ADMIN (Untuk Dropdown Rekomendasi)
     public function searchAdmin(Request $request)
     {
         $query = $request->get('q');
+        
+        if (strlen($query) < 2) return response()->json([]);
+
         $products = Product::where('name', 'like', "%{$query}%")
-                           ->with('mainImage')
-                           ->take(5)->get(); // Ambil 5 rekomendasi teratas
+                           ->with(['mainImage', 'category'])
+                           ->take(5)
+                           ->get()
+                           ->map(function ($p) {
+                               return [
+                                   'id' => $p->id,
+                                   'name' => $p->name,
+                                   'category' => $p->category->name ?? 'Umum',
+                                   'image' => $p->mainImage ? asset('images/' . $p->mainImage->image_path) : asset('images/default.jpg')
+                               ];
+                           });
         
         return response()->json($products);
     }

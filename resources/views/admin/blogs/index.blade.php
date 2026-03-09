@@ -1,42 +1,69 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
     <div>
         <h1 class="text-2xl font-black text-gray-800">Semua Artikel</h1>
         <p class="text-sm text-gray-500 mt-1">Kelola konten blog, tips, dan berita.</p>
+
+        @if(request('search'))
+        <div class="mt-2 inline-flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+            <span class="text-xs font-bold text-blue-800">Mencari: "{{ request('search') }}"</span>
+            <a href="{{ route('admin.blogs.index') }}" class="text-blue-500 hover:text-red-500 transition" title="Reset Pencarian">
+                <i class="fa-solid fa-circle-xmark text-sm"></i>
+            </a>
+        </div>
+        @endif
     </div>
     
-    <div class="flex items-center gap-4">
-        <div class="relative" x-data="{ 
-            query: '', results: [], loading: false,
-            search() {
+    <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+        
+        <div class="relative w-full md:w-72" x-data="{ 
+            query: '{{ request('search') }}', 
+            results: [], 
+            loading: false,
+            searchData() {
                 if(this.query.length < 2) { this.results = []; return; }
                 this.loading = true;
                 fetch(`/admin/blogs/search?q=${this.query}`)
                     .then(res => res.json())
-                    .then(data => { this.results = data; this.loading = false; });
+                    .then(data => { this.results = data; this.loading = false; })
+                    .catch(() => { this.loading = false; });
             }
         }">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            <input type="text" x-model="query" @input.debounce.300ms="search" placeholder="Cari judul artikel..." class="bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm focus:ring-1 focus:border-blue-500 outline-none w-64 shadow-sm">
+            <form action="{{ route('admin.blogs.index') }}" method="GET" class="relative w-full">
+                <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition z-10">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                
+                <input type="text" name="search" x-model="query" @input.debounce.300ms="searchData" placeholder="Cari (Rekomendasi/Enter)..." autocomplete="off"
+                       class="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-10 py-2.5 text-sm focus:ring-1 focus:border-blue-500 outline-none shadow-sm transition">
+                
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                    <i x-show="loading" class="fa-solid fa-spinner fa-spin text-blue-500 text-sm" style="display: none;"></i>
+                </div>
+            </form>
             
-            <div x-show="results.length > 0" @click.outside="results = []" class="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+            <div x-show="results.length > 0" @click.outside="results = []" class="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden" style="display: none;">
                 <template x-for="item in results" :key="item.id">
-                    <a :href="`/admin/blogs/${item.id}/edit`" class="flex items-center gap-3 p-3 hover:bg-blue-50 border-b border-gray-50">
-                        <div class="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                            <img :src="`/images/${item.image_path}`" class="w-full h-full object-cover">
+                    <a :href="`/admin/blogs/${item.id}/edit`" class="flex items-center gap-3 p-3 hover:bg-blue-50 border-b border-gray-50 transition group">
+                        <div class="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                            <img :src="item.image_path ? `/images/${item.image_path}` : '/images/default.jpg'" class="w-full h-full object-cover">
                         </div>
                         <div>
-                            <h4 class="text-xs font-bold text-gray-800 line-clamp-1" x-text="item.title"></h4>
-                            <span class="text-[10px] text-gray-500" x-text="item.category ? item.category.name : ''"></span>
+                            <h4 class="text-xs font-bold text-gray-800 line-clamp-1 group-hover:text-blue-600 transition" x-text="item.title"></h4>
+                            <span class="text-[10px] text-gray-500 font-bold" x-text="item.category ? item.category.name : ''"></span>
                         </div>
                     </a>
                 </template>
             </div>
+
+            <div x-show="query.length >= 2 && results.length === 0 && !loading" style="display: none;" class="absolute top-full right-0 mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-100 p-4 text-center z-50">
+                <span class="text-xs font-bold text-gray-500">Artikel tidak ditemukan.</span>
+            </div>
         </div>
 
-        <a href="{{ route('admin.blogs.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+        <a href="{{ route('admin.blogs.create') }}" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2 whitespace-nowrap">
             <i class="fa-solid fa-plus"></i> Tulis Artikel
         </a>
     </div>

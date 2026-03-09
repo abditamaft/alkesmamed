@@ -30,7 +30,7 @@
                         results: [], 
                         isTyping: false,
                         searchData() {
-                            if(this.query.length > 0) {
+                            if(this.query.length > 1) { // Minimal 2 huruf
                                 this.isTyping = true;
                                 fetch('/api/blog/search?q=' + this.query)
                                     .then(res => res.json())
@@ -49,31 +49,37 @@
                         } 
                      }">
                     <h3 class="text-lg font-bold mb-4 text-gray-800">Cari Artikel</h3>
-                    <form action="{{ route('blog.index') }}" method="GET">
+                    
+                    <form action="{{ route('blog.index') }}" method="GET" class="relative">
                         <div class="relative flex items-center">
-                            <input type="text" name="cari" x-model="query" @input.debounce.250ms="searchData" placeholder="Ketik judul..." autocomplete="off"
-                                   class="w-full bg-white border border-gray-200 rounded-full px-5 h-12 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition">
+                            <input type="text" name="cari" x-model="query" @input.debounce.300ms="searchData" placeholder="Ketik lalu tekan Enter..." autocomplete="off"
+                                   class="w-full bg-white border border-gray-200 rounded-full px-5 pr-12 h-12 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition">
                             
-                            <div x-show="isTyping" class="absolute right-12 top-1/2 -translate-y-1/2 flex items-center">
+                            <div x-show="isTyping" class="absolute right-12 top-1/2 -translate-y-1/2 flex items-center" style="display: none;">
                                 <i class="fa-solid fa-spinner fa-spin text-blue-500 text-sm"></i>
                             </div>
 
-                            <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 flex items-center">
+                            <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 flex items-center p-1">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
                         </div>
                     </form>
 
-                    <div x-show="results.length > 0" @click.away="results = []" style="display: none;" class="absolute z-[99] w-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
+                    <div x-show="results.length > 0" @click.outside="results = []" style="display: none;" class="absolute z-[99] w-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
                         <template x-for="item in results" :key="item.id">
                             <a :href="'/blog/' + item.id" class="flex items-center gap-3 p-3 hover:bg-blue-50 border-b border-gray-50 transition group">
-                                <div class="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                                <div class="w-12 h-12 rounded overflow-hidden flex-shrink-0 border border-gray-100">
                                     <img :src="item.image_path ? '/images/' + item.image_path : '/images/default.jpg'" class="w-full h-full object-cover">
                                 </div>
-                                <span class="text-xs font-bold text-gray-700 group-hover:text-blue-600 line-clamp-2" x-text="item.title"></span>
+                                <span class="text-xs font-bold text-gray-700 group-hover:text-blue-600 line-clamp-2 leading-snug" x-text="item.title"></span>
                             </a>
                         </template>
                     </div>
+
+                    <div x-show="query.length >= 2 && results.length === 0 && !isTyping" style="display: none;" class="absolute z-[99] w-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 text-center">
+                        <span class="text-xs font-bold text-gray-500">Artikel tidak ditemukan.</span>
+                    </div>
+
                 </div>
 
                 <div class="bg-[#f8f8f8] p-6 rounded-xl border border-gray-100">

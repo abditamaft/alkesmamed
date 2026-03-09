@@ -1,31 +1,47 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="mb-8 flex flex-col md:flex-row md:items-start md:items-center justify-between gap-4">
+<div class="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
     <div>
         <h1 class="text-2xl font-black text-gray-800">Wilayah & Ongkos Kirim</h1>
         <p class="text-sm text-gray-500 mt-1">Kelola daftar provinsi dan ongkos kirim per kotanya.</p>
+
+        @if(request('search'))
+        <div class="mt-3 inline-flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+            <span class="text-xs font-bold text-blue-800">Mencari: "{{ request('search') }}"</span>
+            <a href="{{ route('admin.shipping.index') }}" class="text-blue-500 hover:text-red-500 transition" title="Reset Pencarian">
+                <i class="fa-solid fa-circle-xmark text-sm"></i>
+            </a>
+        </div>
+        @endif
     </div>
 
     <div class="relative w-full md:w-80" x-data="{
-        query: '',
+        query: '{{ request('search') }}',
         results: [],
         loading: false,
-        search() {
+        searchData() {
             if(this.query.length < 2) { this.results = []; return; }
             this.loading = true;
             fetch(`/admin/ongkir/search?q=${this.query}`)
                 .then(res => res.json())
-                .then(data => { this.results = data; this.loading = false; });
+                .then(data => { this.results = data; this.loading = false; })
+                .catch(() => { this.loading = false; });
         }
     }">
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-        <input type="text" x-model="query" @keyup.debounce.300ms="search" placeholder="Cari Kota / Kabupaten..." 
-               class="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-10 py-2.5 text-sm focus:border-blue-500 focus:ring-1 outline-none shadow-sm transition">
         
-        <div x-show="loading" class="absolute right-4 top-1/2 -translate-y-1/2">
-            <i class="fa-solid fa-spinner fa-spin text-blue-500 text-sm"></i>
-        </div>
+        <form action="{{ route('admin.shipping.index') }}" method="GET" class="relative">
+            <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition z-10">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            
+            <input type="text" name="search" x-model="query" @input.debounce.300ms="searchData" placeholder="Cari Provinsi/Kota (Enter)..." autocomplete="off"
+                   class="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-10 py-2.5 text-sm focus:border-blue-500 focus:ring-1 outline-none shadow-sm transition">
+            
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                <i x-show="loading" class="fa-solid fa-spinner fa-spin text-blue-500 text-sm" style="display: none;"></i>
+            </div>
+        </form>
         
         <div x-show="results.length > 0" @click.outside="results = []" style="display: none;" class="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden max-h-72 overflow-y-auto custom-scrollbar">
             <template x-for="item in results" :key="item.id">
@@ -43,7 +59,7 @@
         
         <div x-show="query.length >= 2 && results.length === 0 && !loading" style="display: none;" class="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 text-center">
             <i class="fa-solid fa-box-open text-gray-300 text-2xl mb-2 block"></i>
-            <p class="text-xs text-gray-500 font-medium">Kota tidak ditemukan.</p>
+            <p class="text-xs text-gray-500 font-medium">Kota/Provinsi tidak ditemukan.</p>
         </div>
     </div>
 </div>

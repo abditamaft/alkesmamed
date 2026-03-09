@@ -12,6 +12,13 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['images', 'mainImage', 'category', 'variants'])->where('is_active', 1);
+        // 👇 TAMBAHKAN BLOK KODE INI UNTUK MENANGKAP TEKANAN ENTER 👇
+        if ($request->filled('search')) {
+            $query->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhereHas('category', function($q) use ($request) {
+                      $q->where('name', 'LIKE', '%' . $request->search . '%');
+                  });
+        }
 
         // REVISI: Ubah has menjadi filled agar tidak error jika dikosongi
         if ($request->filled('kategori')) {

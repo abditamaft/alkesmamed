@@ -12,9 +12,20 @@ class ShippingController extends Controller
     // ==========================================
     // BAGIAN PROVINSI
     // ==========================================
-    public function index()
+    public function index(Request $request)
     {
-        $provinces = Province::withCount('cities')->orderBy('name')->get();
+        $query = Province::withCount('cities')->orderBy('name');
+
+        // Jika Admin mengetik di kolom pencarian lalu tekan Enter
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('cities', function($q) use ($searchTerm) {
+                      $q->where('name', 'like', '%' . $searchTerm . '%');
+                  });
+        }
+
+        $provinces = $query->get();
         return view('admin.shipping.index', compact('provinces'));
     }
 
