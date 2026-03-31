@@ -89,9 +89,25 @@
                                     <input type="text" name="name" value="{{ $user->name }}" class="w-full bg-white border border-gray-200 rounded-full px-6 py-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm" required>
                                 </div>
 
-                                <div>
+                                <div x-data="{ phone: '{{ old('phone', $user->phone) }}' }">
                                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">No. Telepon (WhatsApp) *</label>
-                                    <input type="text" name="phone" value="{{ $user->phone }}" class="w-full bg-white border border-gray-200 rounded-full px-6 py-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm" required>
+                                    
+                                    <input type="text" name="phone" x-model="phone" 
+                                        class="w-full rounded-full px-6 py-4 focus:outline-none focus:ring-1 transition shadow-sm border"
+                                        :class="(phone.length > 0 && (phone.length < 10 || phone.length > 13 || !/^\d+$/.test(phone))) 
+                                                ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500 text-red-600' 
+                                                : 'border-gray-200 bg-white focus:border-blue-500 focus:ring-blue-500 text-gray-800'"
+                                        required>
+                                        
+                                    <p x-show="phone.length > 0 && phone.length < 10" class="text-red-500 text-[11px] font-bold mt-2 ml-4" style="display: none;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Terlalu pendek! Minimal 10 angka.
+                                    </p>
+                                    <p x-show="phone.length > 13" class="text-red-500 text-[11px] font-bold mt-2 ml-4" style="display: none;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Terlalu panjang! Maksimal 13 angka.
+                                    </p>
+                                    <p x-show="phone.length > 0 && !/^\d+$/.test(phone)" class="text-red-500 text-[11px] font-bold mt-2 ml-4" style="display: none;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Hanya boleh berisi angka (tanpa spasi/huruf/-/+).
+                                    </p>
                                 </div>
 
                                 <div class="pt-6 mt-6 border-t border-gray-100">

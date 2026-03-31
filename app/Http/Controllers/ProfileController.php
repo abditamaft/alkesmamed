@@ -57,7 +57,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|numeric|digits_between:10,13',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'province_id' => 'required|exists:provinces,id',
             'city_id' => 'required|exists:cities,id',
@@ -70,6 +70,8 @@ class ProfileController extends Controller
             
             'name.required' => 'Nama lengkap wajib diisi.',
             'phone.required' => 'Nomor telepon WhatsApp wajib diisi.',
+            'phone.numeric' => 'Gagal: Nomor telepon hanya boleh berisi angka.',
+            'phone.digits_between' => 'Gagal: Nomor telepon harus terdiri dari 10 hingga 13 angka.',
             'province_id.required' => 'Silakan pilih Provinsi terlebih dahulu.',
             'city_id.required' => 'Silakan pilih Kota/Kabupaten terlebih dahulu.',
             'address_line.required' => 'Alamat lengkap tidak boleh kosong.',
