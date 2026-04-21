@@ -41,7 +41,7 @@ class ProductSeeder extends Seeder
             ]);
 
             // 3. Buat 4 Produk untuk masing-masing Kategori (Total 20 Produk)
-            for ($i = 1; $i <= 4; $i++) {
+            for ($i = 1; $i <= 16; $i++) {
                 $prodName = 'Alat Kesehatan Mamed ' . $catName . ' Seri ' . $i;
                 $product = Product::create([
                     'category_id' => $category->id,
@@ -65,7 +65,7 @@ class ProductSeeder extends Seeder
                 }
 
                 // 5. Buat 4 Gambar per Produk (Total 80 Gambar)
-                for ($j = 1; $j <= 4; $j++) {
+                for ($j = 1; $j <= 16; $j++) {
                     ProductImage::create([
                         'product_id' => $product->id,
                         // Kita pakai 'gambar_hero.jpg' yang sudah ada di folder Anda agar web tidak error cari gambar

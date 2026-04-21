@@ -7,7 +7,7 @@
         
         <div class="flex flex-col items-center md:items-start">
             <div class="flex items-center gap-2 mb-4 md:mb-6">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-gray-800 rounded-full flex items-center justify-center text-white font-bold text-lg md:text-xl">MG</div>
+                <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="w-8 h-8 rounded-full object-cover">
                 <span class="text-xl md:text-2xl font-bold uppercase">Alkes Mamed</span>
             </div>
             <p class="text-sm text-gray-500 leading-relaxed mb-4">

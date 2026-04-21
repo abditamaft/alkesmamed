@@ -1,0 +1,12 @@
+resource
+php artisan make:controller ProdukController -r
+
+php artisan make:model Produk
+
+php artisan make:model Produk -m
+
+php artisan make:migration create_produks_table
+php artisan migrate
+
+php artisan make:seeder ProdukSeeder
+php artisan db:seed --class=ProdukSeeder
