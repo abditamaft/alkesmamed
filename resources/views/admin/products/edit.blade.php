@@ -30,9 +30,9 @@
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100" x-data="{
-                variants: [
-                    @foreach($product->variants as $var)
-                        { unique: {{ $var->id }}, id: {{ $var->id }}, name: '{{ $var->variant_name }}', price: {{ $var->price }}, stock: {{ $var->stock }}, weight: {{ $var->weight_gram }}, sku: '{{ $var->sku }}' },
+                images: [
+                    @foreach($product->images->take(5) as $img) 
+                        { unique: '{{ $img->id }}_old', id: {{ $img->id }}, isOld: true, preview: '{{ asset('images/'.$img->image_path) }}' },
                     @endforeach
                 ],
                 addVariant() { this.variants.push({ unique: Date.now(), id: null, name: '', price: '', stock: '', weight: '', sku: '' }); },
@@ -112,9 +112,18 @@
             }">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-base font-bold text-gray-800">Galeri Foto</h2>
-                    <button type="button" @click="addSlot()" class="text-blue-600 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition">
+                    
+                    <button type="button" 
+                            x-show="images.length < 5" 
+                            x-transition
+                            @click="addSlot()" 
+                            class="text-blue-600 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition">
                         <i class="fa-solid fa-plus"></i> Tambah Slot
                     </button>
+
+                    <span x-show="images.length >= 5" x-cloak class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-circle-check"></i> Slot Penuh (Max 5)
+                    </span>
                 </div>
 
                 <input type="hidden" name="cover_is_new" :value="!images[0].isOld ? '1' : '0'">

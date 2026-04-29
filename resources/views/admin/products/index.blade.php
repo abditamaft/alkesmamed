@@ -75,6 +75,7 @@
                     <th class="px-6 py-4 font-bold">Kategori</th>
                     <th class="px-6 py-4 font-bold">Varian & Stok</th>
                     <th class="px-6 py-4 font-bold text-center">Status Tampil</th>
+                    <th class="px-6 py-4 font-bold text-center">Flash Sale</th>
                     <th class="px-6 py-4 font-bold text-right">Aksi</th>
                 </tr>
             </thead>
@@ -108,6 +109,27 @@
                         }" class="flex justify-center">
                             <button @click="toggle" :class="isActive ? 'bg-green-500' : 'bg-gray-300'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none">
                                 <span :class="isActive ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div x-data="{ 
+                            isFlashSale: {{ $prod->is_flash_sale ? 'true' : 'false' }},
+                            toggleFlash() {
+                                fetch(`/admin/produk/{{ $prod->id }}/toggle-flash-sale`, {
+                                    method: 'POST',
+                                    headers: { 
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json'
+                                    }
+                                }).then(res => res.json()).then(data => {
+                                    if(data.success) this.isFlashSale = data.is_flash_sale;
+                                });
+                            }
+                        }" class="flex justify-center">
+                            <!-- Saya pakai warna kuning/oranye (bg-yellow-500) agar beda dengan hijau (Status Tampil) -->
+                            <button @click="toggleFlash" :class="isFlashSale ? 'bg-yellow-500' : 'bg-gray-300'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none">
+                                <span :class="isFlashSale ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
                             </button>
                         </div>
                     </td>

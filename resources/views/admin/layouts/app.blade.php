@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Alkes Mamed</title>
-    @vite('resources/css/app.css') <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @vite('resources/css/app.css') 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased" x-data="{ sidebarOpen: true }">
@@ -75,7 +77,12 @@
                     <p class="text-xs font-bold text-slate-500 uppercase tracking-wider px-3" x-show="sidebarOpen">Konten Web</p>
                 </div>
 
-                <div x-data="{ openMenu: {{ request()->routeIs('admin.blogs.*', 'admin.blog_categories.*') ? 'true' : 'false' }} }">
+                <a href="{{ route('admin.home.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition group {{ request()->routeIs('admin.home.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <i class="fa-solid fa-desktop w-5 text-center transition {{ request()->routeIs('admin.home.*') ? 'text-white' : 'group-hover:text-blue-400' }}"></i>
+                    <span x-show="sidebarOpen">Manajemen Beranda</span>
+                </a>
+
+                <div x-data="{ openMenu: {{ request()->routeIs('admin.blogs.*', 'admin.blog_categories.*') ? 'true' : 'false' }} }" class="mt-1">
                     <button @click="openMenu = !openMenu" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition group {{ request()->routeIs('admin.blogs.*', 'admin.blog_categories.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-newspaper w-5 text-center transition {{ request()->routeIs('admin.blogs.*', 'admin.blog_categories.*') ? 'text-blue-400' : 'group-hover:text-blue-400' }}"></i>
@@ -85,7 +92,6 @@
                     </button>
                     <div x-show="openMenu && sidebarOpen" x-collapse class="pl-11 pr-3 py-1 space-y-1">
                         <a href="{{ route('admin.blogs.index') }}" class="block py-2 text-sm transition {{ request()->routeIs('admin.blogs.*') ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white' }}">• Semua Artikel</a>
-                        
                         <a href="{{ route('admin.blog_categories.index') }}" class="block py-2 text-sm transition {{ request()->routeIs('admin.blog_categories.*') ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white' }}">• Kategori Blog</a>
                     </div>
                 </div>

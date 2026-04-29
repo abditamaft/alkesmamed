@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\HomeSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 
 // ==========================================================
@@ -122,6 +123,8 @@ Route::prefix('admin')->group(function () {
         Route::delete('/kategori/{id}', [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
         // Rute AJAX Produk (Realtime Status & Search)
         Route::post('/produk/{id}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('admin.products.toggle');
+        // 👇 TAMBAHKAN BARIS INI 👇
+        Route::post('/produk/{id}/toggle-flash-sale', [AdminProductController::class, 'toggleFlashSale'])->name('admin.products.toggleFlashSale');
         Route::get('/produk/search', [AdminProductController::class, 'searchAdmin'])->name('admin.products.search');
         // CRUD PRODUK
         Route::resource('produk', AdminProductController::class, [
@@ -151,5 +154,11 @@ Route::prefix('admin')->group(function () {
         Route::post('/blogs/{id}/toggle-status', [App\Http\Controllers\Admin\BlogPostController::class, 'toggleStatus'])->name('admin.blogs.toggle');
         Route::get('/blogs/search', [App\Http\Controllers\Admin\BlogPostController::class, 'searchAdmin'])->name('admin.blogs.search');
         Route::resource('blogs', App\Http\Controllers\Admin\BlogPostController::class)->names('admin.blogs');
+        // PENGATURAN HALAMAN DEPAN (HOME)
+        // PENGATURAN HALAMAN DEPAN (HOME)
+        Route::get('/home-setting', [\App\Http\Controllers\Admin\HomeSettingController::class, 'index'])->name('admin.home.index');
+        Route::post('/home-setting/about', [\App\Http\Controllers\Admin\HomeSettingController::class, 'updateAbout'])->name('admin.home.updateAbout');
+        Route::post('/home-setting/banner', [\App\Http\Controllers\Admin\HomeSettingController::class, 'storeBanner'])->name('admin.home.storeBanner');
+        Route::delete('/home-setting/banner/{id}', [\App\Http\Controllers\Admin\HomeSettingController::class, 'destroyBanner'])->name('admin.home.destroyBanner');
     });  
 });

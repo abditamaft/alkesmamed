@@ -145,6 +145,19 @@ class ProductController extends Controller
             'message' => 'Status produk berhasil diubah!'
         ]);
     }
+    // 6.5 FITUR: REALTIME TOGGLE FLASH SALE
+    public function toggleFlashSale(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        $product->is_flash_sale = !$product->is_flash_sale; // Balikkan status 1 jadi 0, 0 jadi 1
+        $product->save();
+
+        return response()->json([
+            'success' => true, 
+            'is_flash_sale' => $product->is_flash_sale,
+            'message' => 'Status Flash Sale berhasil diubah!'
+        ]);
+    }
 
     // 7. TAMPILKAN FORM EDIT PRODUK
     public function edit($id)

@@ -15,8 +15,8 @@
         ];
     });
 
-    // Format Data Gambar
-    $imageData = $product->images->map(function($img) {
+    // Format Data Gambar (Dibatasi maksimal 5 gambar saja)
+    $imageData = $product->images->take(5)->map(function($img) {
         return asset('images/' . $img->image_path);
     });
     // Jika tidak ada gambar, pasang default
@@ -179,7 +179,7 @@
                         <button @click="nextImg()" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md text-gray-500 hover:text-blue-500 md:opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     
-                    <div class="grid grid-cols-4 gap-2 md:gap-4 mt-4">
+                    <div class="flex flex-wrap md:grid md:grid-cols-5 gap-2 md:gap-3 mt-4">
                         <template x-for="(img, index) in images" :key="index">
                             <div @click="currentIndex = index" 
                                  class="aspect-square bg-white rounded-xl border-2 cursor-pointer transition-all duration-300 p-1 md:p-2 overflow-hidden"
